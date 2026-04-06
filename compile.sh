@@ -62,34 +62,27 @@ unzip -q $FILE -d aseprite \
     || { echo "Unable to decompress the source code, make sure you have the unzip package installed." >&2 ; exit 1 ; }
 echo "${FILE} decompresed."
 
-# Check distro
-os_name=$(grep 'NAME=' /etc/os-release | head -n 1 | sed 's/NAME=//' | tr -d '"')
+. /etc/os-release
 
-# Assign package manager to a variable
-if [[ "$os_name" == *"Fedora"* ]]; then
-    package_man="dnf"
-elif [[ $os_name == *"Debian"* ]] || [[ $os_name == *"Ubuntu"* ]] || [[ $os_name == *"Mint"* ]]; then
-    package_man="apt"
-elif [[ $os_name == *"Arch"* ]] || [[ $os_name == *"Manjaro"* ]]; then
-    package_man="pacman"
-else
-    echo "Unsupported distro! If your distro supports APT, DNF or PACMAN, please manually modify the script to set os_name='Ubuntu' for apt, os_name='Fedora' for dnf or os_name='Arch' for pacman. You can also open an issue ticket."
-    echo "Stopped installation!"
-    exit 1
-fi
+case "$ID:$ID_LIKE" in
+    *debian*) package_man="apt" ;;
+    *ubuntu*) package_man="apt" ;;  # catches Ubuntu derivatives
+    *fedora*) package_man="dnf" ;;
+    *arch*)   package_man="pacman" ;;
+    *) echo "No supported package manager found for $ID / $ID_LIKE. The currently supported package managers are: apt, dnf and pacman."; exit 1 ;;
+esac
 
 echo "Enter sudo password to install dependencies. This is also a good time to plug in your computer, since compiling will take a long time."
 
 # Install dependencies
 if [[ $package_man == "dnf" ]]; then
-    cat aseprite/INSTALL.md | grep -m1 "sudo dnf install" | bash 
+    cat aseprite/INSTALL.md | grep -m1 "sudo dnf install" | bash
 elif [[ $package_man == "apt" ]]; then
     cat aseprite/INSTALL.md | grep -m1 "sudo apt-get install" | bash
 elif [[ $package_man == "pacman" ]]; then
     deps=$(cat aseprite/INSTALL.md | grep -m1 "sudo pacman -S")
-    deps=${deps/-S/-S --needed --noconfirm} 
+    deps=${deps/-S/-S --needed --noconfirm}
     bash -c "$deps"
-
 fi
 
 [[ $? == 0 ]] \
