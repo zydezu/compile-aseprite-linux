@@ -11,6 +11,10 @@ BINARY_FILE="${BINARY_DIR}/aseprite"
 LAUNCHER_FILE="${LAUNCHER_DIR}/aseprite.desktop"
 ICON_FILE="${INSTALL_DIR}/data/icons/ase256.png"
 
+for cmd in curl wget unzip bash realpath mktemp ln sed; do
+    command -v "$cmd" >/dev/null 2>&1 || { echo "$cmd is required but not installed. Please install it and run this script again."; exit 1; }
+done
+
 if [[ -f "${SIGNATURE_FILE}" ]] ; then
     read -e -p "Aseprite already installed. Update? (y/N): " choice
     [[ "${choice}" == [Yy]* ]] \
@@ -58,8 +62,8 @@ echo "Aseprite downloaded from: ${SOURCE_CODE}"
 FILE=$(echo $SOURCE_CODE | awk -F/ '{print $NF}')
 
 # Unzip the source code
-unzip -q $FILE -d aseprite \
-    || { echo "Unable to decompress the source code, make sure you have the unzip package installed." >&2 ; exit 1 ; }
+unzip -q "$FILE" -d aseprite \
+    || { echo "Failed to unzip $FILE." >&2 ; exit 1 ; }
 echo "${FILE} decompresed."
 
 . /etc/os-release
